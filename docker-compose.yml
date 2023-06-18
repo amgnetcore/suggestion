@@ -11,7 +11,7 @@ services:
     - http
     image: semitechnologies/weaviate:1.19.6
     ports:
-    - 8080:8080
+    - 3003:8080
     restart: on-failure:0
     environment:
       TRANSFORMERS_INFERENCE_API: 'http://t2v-transformers:8080'

@@ -7,7 +7,7 @@ const app=express()
 
 const client = weaviate.client({
     scheme: "http",
-    host: "localhost:8080",
+    host: "localhost:3003",
   });
 
   const checkSchemaClass= async()=>{
@@ -87,24 +87,27 @@ const creatSchema=async()=>{
 }
 
 
-const addData=async(dat)=>{
+
+"title","description","availibility","condition","price","link","mage_link","brand","category","subCategory","length","colour","pattern","fit"
+
+const addData=async(row)=>{
    let added= await client.data.creator()
     .withClassName('Product')
     .withProperties({
-        title:dat[0],
-        description:dat[1],
-        availibility:dat[2],
-        condition:dat[3],
-        price:dat[4],
-        link:dat[5],
-        mage_link:dat[6],
-        brand:dat[7],
-        category:dat[8],
-        subCategory:dat[9],
-        length:dat[10],
-        colour:dat[11],
-        pattern:dat[12],
-        fit:dat[13]
+        title:row[0],
+        description:row[1],
+        availibility:row[2],
+        condition:row[3],
+        price:row[4],
+        link:row[5],
+        mage_link:row[6],
+        brand:row[7],
+        category:row[8],
+        subCategory:row[9],
+        length:row[10],
+        colour:row[11],
+        pattern:row[12],
+        fit:row[13]
     })
     .do()
     return added
@@ -134,27 +137,27 @@ async function viewProducts() {
 
 const bulkIndexing=()=>{
   
-
+    const results = [];
 fs.createReadStream("data.csv")
   .pipe(parse({ delimiter: ",", from_line: 2 }))
   .on("data", function (row) {
-
-    productData.push({
-        title:row[0],
-        description:row[1],
-        availibility:row[2],
-        condition:row[3],
-        price:row[4],
-        link:row[5],
-        mage_link:row[6],
-        brand:row[7],
-        category:row[8],
-        subCategory:row[9],
-        length:row[10],
-        colour:row[11],
-        pattern:row[12],
-        fit:row[13]
-    })
+    results.push(row);
+    // productData.push({
+    //     title:row[0],
+    //     description:row[1],
+    //     availibility:row[2],
+    //     condition:row[3],
+    //     price:row[4],
+    //     link:row[5],
+    //     mage_link:row[6],
+    //     brand:row[7],
+    //     category:row[8],
+    //     subCategory:row[9],
+    //     length:row[10],
+    //     colour:row[11],
+    //     pattern:row[12],
+    //     fit:row[13]
+    // })
     // addData(row).then(res=>{
     //         console.log(`the data has been indexed properly ${res}`)
               
@@ -164,25 +167,30 @@ fs.createReadStream("data.csv")
 
   })
   .on("end", function () {
-    console.log("finished");
-    console.log(productData)
-    json=JSON.stringify(productData,null,2)
-    return productData
+    for(const row of results){
+        addData(row).then(res=>{
+            console.log(`the data has been indexed properly ${res}`)
+              
+        }).catch(err=>{
+            console.log('error')
+        })
+    }
   })
   .on("error", function (error) {
     console.log(error.message);
   });
 
 }
+//'idd','availability','condition','price','link','image_link','mpn','brand','google_product_category','product_type	custom_label_1','custom_label_2	custom_label_3','title','description','promotion_id'
 
 const queryingDatabase=async(text)=>{
     let data = await client.graphql
         .get()
         .withClassName('Product')
-        .withFields(['idd','availability','condition','price','link','image_link','mpn','brand','google_product_category','product_type	custom_label_1','custom_label_2	custom_label_3','title','description','promotion_id'])
+        .withFields(['title','description','availibility','condition','price','link','mage_link','brand','category','subCategory','length','colour','pattern','fit'])
         .withNearText({
             concepts: [text],
-            certainty: 0.9
+            certainty: 0.6
         })
         .withLimit(4)
         .do()
@@ -204,12 +212,12 @@ const queryingDatabase=async(text)=>{
 //---------------------------------------------------------------Ends over here--------------------------------------------------------------------
 
 
-checkSchemaClass().then(()=>{
-    console.log('the classe in the local system if no classe are present run the schema for creating the class')
+// checkSchemaClass().then(()=>{
+//     console.log('the classe in the local system if no classe are present run the schema for creating the class')
    
-}).catch(err=>{
-    console.log('error buddy')
-})
+// }).catch(err=>{
+//     console.log('error buddy')
+// })
 
 
 
@@ -218,15 +226,15 @@ checkSchemaClass().then(()=>{
 
 //----------------------------------------------------------BULKINDEXING--------------------------------------------------------------------
 // bulkIndexing()
-
+// deletClass()
 //------------------------------------------------------------ENDING---------------------------------------------------
 
 //-----------------------------------------------------QUERY---------------------------------------------------
-// queryingDatabase('i want to buy a floral dress').then(res=>{
-//     console.log(res)
-// }).catch(err=>{
-//     console.log(err)
-// })
+queryingDatabase('red dress').then(res=>{
+    console.log(res)
+}).catch(err=>{
+    console.log(err)
+})
 //-------------------------------------------------------------ENDING-----------------------------------------------------------------------
 
 
@@ -235,10 +243,12 @@ checkSchemaClass().then(()=>{
 // deletClass('Product')
 //---------------------------------------------------------------ENDING-----------------------------------------------------------------------
 
+// 
+// viewProducts()
+// queryingDatabase('red dress')
 
-viewProducts()
 app.use(express.json());
-app.listen(8000,(err)=>{
+app.listen(4000,(err)=>{
    if(!err){
      console.log('the port is running sucesfully')
    }else{
@@ -257,3 +267,14 @@ app.get('/',(req,res)=>{
 
    
 })
+
+// app.get('/movies',(req,res)=>{
+//     let text=req.body.text
+//     queryingDatabaseMovie(text).then(rs=>{
+//         res.send(rs)
+//         res.status(200)
+//      }).catch(err=>{
+//          console.log(err)
+//      })
+
+// })
